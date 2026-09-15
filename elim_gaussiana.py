@@ -58,7 +58,12 @@ def elim_gaussiana(A):
             
     
     return L, U, cant_op
+    
+def restri(L, b):
 
+    # directamente trabajo con b
+    # y la L me sirve para hacer las divisiones
+    # guardo las x en un vector 
 
 def main():
     n = 7
