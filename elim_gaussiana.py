@@ -42,11 +42,13 @@ def elim_gaussiana(A):
             
             aux[fila][col] = factor
             L[fila][col] = factor
-        
+            
         M = I - aux
+        cant_op += 1
         Ms.put(M)
         # Actualizamos Ac
         Ac = M @ Ac
+        # CONTAR TODAS LAS OPERACIONES QUE HACE MULTIPLICACIONES
         # Me falta calcular la cantidad de operaciones de @
         # Despues reemplazo @ por multiplicacion matricial
     U = Ac
