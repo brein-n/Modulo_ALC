@@ -64,6 +64,7 @@ def restri(L, b):
     # directamente trabajo con b
     # y la L me sirve para hacer las divisiones
     # guardo las x en un vector 
+    return
 
 def main():
     n = 7
