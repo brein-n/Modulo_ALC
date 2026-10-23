@@ -1,5 +1,17 @@
 import numpy as np  
 
+#Laboratorio 0
+
+def traspuesta(a):
+    filas,columnas = a.shape
+    # inicializamos la matriz vacia
+    new = np.empty((columnas, filas), dtype=a.dtype)
+    for i in range(filas):
+        new[:, i] = a[i]
+    #     agarra la fila i de a y guardala como la columna i de new
+    return new
+
+
 # Laboratorio 1
 
 def error(x, y):
@@ -23,13 +35,14 @@ def error_relativo(x, y):
 
 def matricesIguales(A, B):
     
-    if len(A) != len(B) or len(A[0]) != len(B[0]):
+    a_filas, a_columnas = A.shape
+    b_filas , b_columnas = B.shape
+    if a_filas != b_filas or a_columnas != b_columnas:
         return False
-    
-    # Aca suponemos que las dimensiones son iguales
-    for n in range (len(A)):
+    # Aca ya sabemos  que las dimensiones son iguales
+    for n in range(0, a_filas):
         # no necesariamente es cuadrada 
-        for m in range(len(A[0])):
+        for m in range(0, a_columnas):
             # if A[n][m] != B[n][m]:
             # Con el distinto no me pasa por lo que lo panteo con error
             # Si uso error funciona a partir de 1e-07 pero con resta a partir de 1e-08
@@ -150,3 +163,81 @@ def trans_afin(v, theta, s, b):
     return res
 
 
+# Laboratorio 3
+
+
+
+def norma(vector,p):
+    """
+    Devuelve la norma p del vector x.
+    """
+    if p == 'inf':
+        return normaInfinito(vector)
+    acum = 0
+    for i in range(len(vector)):
+        acum = abs(vector[i])**p + acum
+    return acum**(1/p)
+
+def normaliza(vectores,p):
+    copia = vectores.copy()
+    for i in range(len(vectores)):
+        copia[i] = copia[i]/norma(copia[i],p)
+    return copia
+
+def normaMatMC(A, q, p, Np):
+    """
+    Devuelve la norma ||A||_{q,p} y el vector x en el cual
+    se alcanza el máximo.
+    """
+    maximo_encontrado = 0
+    maximo_xs = None
+    for _ in range(0,Np):
+        x = np.random.normal(0, 1, A.shape[1])
+        xs = x/norma(x,p)
+        ys = A@xs
+        ys_max = norma(ys,q)
+        if ys_max > maximo_encontrado:
+            maximo_encontrado = ys_max
+            maximo_xs = xs
+    return maximo_encontrado,maximo_xs
+
+def normaExacta(A, p=[1, 'inf']):
+    """
+    Devuelve una lista con las normas 1 e infinito de una matriz A
+    usando las expresiones del enunciado 2.(c).
+    """
+    absA = np.abs(A)
+    norma1 = absA.sum(axis=0).max()
+    normaInf = absA.sum(axis=1).max()
+    if p == 1:
+        return norma1
+    if p == 'inf':
+        return normaInf
+    if p == [1, 'inf']:
+        return [norma1, normaInf]
+    return None
+
+
+def normaInfinito(vector):
+    return abs(vector).max()
+
+
+
+
+def condMC(A,p,Np=10000):
+    """
+    Devuelve el número de condición de A usando la norma inducida p.
+    """
+    a_norm = normaMatMC(A,p,p,Np)
+    a_inv_norm = normaMatMC(np.linalg.inv(A),p,p,Np)
+
+    return a_norm[0]*a_inv_norm[0]
+
+def condExacta(A,p):
+    """
+    Devuelve el número de condición de A a partir de la fórmula
+    de la ecuación (1) usando la norma p.
+    """
+    a_norm = normaExacta(A,p)
+    a_inv_norm = normaExacta(np.linalg.inv(A),p)
+    return a_norm*a_inv_norm
