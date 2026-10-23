@@ -1,0 +1,14 @@
+p_W_corners.txt
+contiene las coordenadas Ui Vi Wi  de l mundo real del punto Pi
+este tengo que usarolo
+
+
+detected_corners.txt cada fila de este archivo representa todos los puntos de una imagen i  como la imagen img_0_0001.jpg, hay como 200 filas que son 200 fotos distintas, con uno es suficiente
+
+la forma que tiene el detected_corners.txt es:
+u1 v1 u2 v2 u3 v3 ... u12 v12
+donde u1,v1 son las coordenadas del punto 1,
+y u2,v2 son las coordenadas del punto 2
+y asi sucesivamente
+
+entonces con una sola fila de ese dataset  y el p_w_corners se puede armar toda la matriz Q
