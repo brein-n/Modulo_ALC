@@ -33,22 +33,15 @@ def error_relativo(x, y):
     
     return error_relativo
 
-def matricesIguales(A, B):
-    
-    a_filas, a_columnas = A.shape
-    b_filas , b_columnas = B.shape
-    if a_filas != b_filas or a_columnas != b_columnas:
+def matricesIguales(a,b,atol=1e-8):
+    filas_a,columnas_a = a.shape
+    filas_b,columnas_b = b.shape
+    if filas_a != filas_b or columnas_a != columnas_b:
         return False
-    # Aca ya sabemos  que las dimensiones son iguales
-    for n in range(0, a_filas):
-        # no necesariamente es cuadrada 
-        for m in range(0, a_columnas):
-            # if A[n][m] != B[n][m]:
-            # Con el distinto no me pasa por lo que lo panteo con error
-            # Si uso error funciona a partir de 1e-07 pero con resta a partir de 1e-08
-            if error(A[n][m], B[n][m]) > 1e-07:
+    for i in range(filas_a):
+        for j in range(columnas_a):
+            if not np.isclose(a[i,j],b[i,j],atol=atol):
                 return False
-            
     return True
 
 # Laboratorio 2
@@ -241,3 +234,128 @@ def condExacta(A,p):
     a_norm = normaExacta(A,p)
     a_inv_norm = normaExacta(np.linalg.inv(A),p)
     return a_norm*a_inv_norm
+
+
+
+# Laboratorio 4
+
+
+
+def calculaLU(A):
+    """
+    Calcula la factorización LU de la matriz A y retorna las matrices L
+    y U, junto con el número de operaciones realizadas.
+    En caso de que la matriz no pueda factorizarse, retorna None.
+    """
+    if A is None or A.shape[0] != A.shape[1]:
+        return None, None, 0
+    cant_op = 0
+    m, n = A.shape
+    Ac = A.copy()
+
+    for k in range(0, n - 1):
+        if Ac[k, k] == 0:
+            return None, None, 0
+
+        for i in range(k + 1, n):
+            Ac[i, k] = Ac[i, k] / Ac[k, k]
+            cant_op += 1
+
+            for j in range(k + 1, n):
+                Ac[i, j] = Ac[i, j] - Ac[i, k] * Ac[k, j]
+                cant_op += 2
+
+    if Ac[n - 1, n - 1] == 0:
+        return None, None, 0
+
+    L = np.zeros(A.shape)
+    for i in range(n):
+        L[i, i] = 1
+        for j in range(i):
+            L[i, j] = Ac[i, j]
+
+    U = np.zeros(A.shape)
+    for i in range(n):
+        U[i, i] = Ac[i, i]
+        for j in range(i + 1, n):
+            U[i, j] = Ac[i, j]
+
+    return L, U, cant_op
+
+
+def res_tri(L, b, inferior=True):
+    """
+    Resuelve el sistema Lx = b, donde L es triangular.
+    Se puede indicar si es triangular inferior o superior usando
+    el argumento inferior (por defecto, asumir que es triangular inferior).
+    """
+    vector_solucion = np.zeros_like(b, dtype=float)
+    if inferior:
+        for i in range(0, len(b)):
+            acum = 0
+            for j in range(0, i):
+                acum = acum + L[i, j] * vector_solucion[j]
+            vector_solucion[i] = (b[i] - acum) / L[i, i]
+        return vector_solucion
+    else:
+        for i in range(len(b) - 1, -1, -1):
+            acum = 0
+            for j in range(i + 1, len(b)):
+                acum = acum + L[i, j] * vector_solucion[j]
+            vector_solucion[i] = (b[i] - acum) / L[i, i]
+        return vector_solucion
+
+
+def inversa(A):
+    """
+    Calcula la inversa de A empleando la factorización LU
+    y las funciones que resuelven sistemas triangulares.
+    """
+    L, U, _ = calculaLU(A)
+    if L is None:
+        return None
+
+    n = A.shape[0]
+    canonicos = np.eye(n)
+    # la fila i de inv_t es la solucion de A x = e_i, o sea la columna i de la inversa
+    inv_t = np.zeros((n, n))
+    for i in range(0, n):
+        y = res_tri(L, canonicos[i])
+        inv_t[i] = res_tri(U, y, inferior=False)
+
+    return traspuesta(inv_t)
+
+
+def calculaLDV(A):
+    """
+    Calcula la factorización LDV de la matriz A, de forma tal que
+    A = LDV, con L triangular inferior, D diagonal y V triangular superior.
+    En caso de que la matriz no pueda factorizarse, retorna None.
+    """
+    L, U, _ = calculaLU(A)
+    if L is None:
+        return None, None, None
+
+    U_t = traspuesta(U)
+
+    V_t, D, _ = calculaLU(U_t)
+
+    V = traspuesta(V_t)
+
+    return L,D,V
+
+def esSDP(A,atoi=1e-10):
+    """
+    Determina si una matriz es semidefinida positiva.
+    """
+    if not matricesIguales(A,traspuesta(A),atoi):
+        return False
+
+    _,D,_ = calculaLDV(A)
+    if D is None:
+        return False
+
+    for i in range(0,D.shape[0]):
+        if D[i,i] <= atoi:
+            return False
+    return True
