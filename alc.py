@@ -160,7 +160,7 @@ def trans_afin(v, theta, s, b):
 
 
 
-def norma(vector,p):
+def norma(vector,p=2):
     """
     Devuelve la norma p del vector x.
     """
@@ -359,3 +359,80 @@ def esSDP(A,atoi=1e-10):
         if D[i,i] <= atoi:
             return False
     return True
+
+
+
+
+def producto_vectorial(v1,v2):
+    if v1.shape[0] != v2.shape[0]:
+        raise ValueError("Las dimensiones de los vectores no coinciden")
+    return sum(v1 * v2)
+
+def QR_con_GS(A,tol=1e-12,retorna_nops=False):
+    n, m = A.shape
+    if n != m:
+        return None
+    Q = np.zeros((n, n))
+    R = np.zeros((n, n))
+    cant_op = 0
+    q1 = A[:, 0]
+    norma_q1 = norma(q1)
+    q1 = q1 / norma_q1
+    cant_op += 3 * n - 1
+    Q[:, 0] = q1
+    R[0, 0] = norma_q1
+    for j in range(1, n):
+        qj = A[:, j]
+        for k in range(j):
+            R[k, j] = producto_vectorial(Q[:, k], qj)
+            qj = qj - R[k, j] * Q[:, k]
+        R[j, j] = norma(qj)
+        qj = qj / R[j, j]
+        Q[:, j] = qj
+    if retorna_nops:
+        return Q, R, cant_op
+    else:
+        return Q, R
+
+
+def QR_con_HH(A, tol=1e-12):
+    m, n = A.shape
+
+    if m < n:
+        return None
+
+    R = A.copy()
+    Q = np.eye(m)
+    for k in range(n):
+        x = R[k:, k]
+        alfa = -np.sign(x[0])*norma(x)
+        u = x - alfa*np.eye(m-k)[0]
+        norma_2 = norma(u)
+        if norma_2 > tol:
+            u = u/norma(u)
+            Hk = calcula_Householder_k(u,m-k)
+            i_m = np.eye(m)
+            h_k_monio = np.eye(m)
+            h_k_monio[0:k,0:k] = i_m[0:k,0:k]
+            h_k_monio[k:m,k:m] = Hk
+            R = h_k_monio @ R
+            Q = Q @ traspuesta(h_k_monio)
+
+    return Q, R
+
+
+def calcula_Householder_k(u,tamanio):
+    Imk = np.eye(tamanio)
+    Hk = np.eye(tamanio)
+    for i in range(u.shape[0]):
+        for j in range (u.shape[0]):
+            Hk[i,j] = Imk[i,j] - 2*u[i]*u[j]
+    return Hk
+
+def calculaQR(A,metodo=['GS','RH'],tol=1e-12):
+    if metodo == 'GS':
+        return QR_con_GS(A,tol)
+    elif metodo == 'RH':
+        return QR_con_HH(A,tol)
+    else:
+        return None
