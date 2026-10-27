@@ -1,7 +1,7 @@
 # Test L06-metpot2k, Aval
 
 import numpy as np
-from alc import metpot2k
+from alc import metpot2k, diagRH, normaExacta
 #### TESTEOS
 # Tests metpot2k
 

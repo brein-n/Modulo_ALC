@@ -173,7 +173,8 @@ def trans_afin(v, theta, s, b):
 
 # Laboratorio 3
 
-
+def normaliza_vector(vector, p=2):
+    return vector / norma(vector, p)
 
 def norma(vector,p=2):
     """
@@ -378,7 +379,7 @@ def esSDP(A,atoi=1e-10):
 
 
 
-def producto_vectorial(v1,v2):
+def producto_interno(v1,v2):
     if v1.shape[0] != v2.shape[0]:
         raise ValueError("Las dimensiones de los vectores no coinciden")
     return sum(v1 * v2)
@@ -399,7 +400,7 @@ def QR_con_GS(A,tol=1e-12,retorna_nops=False):
     for j in range(1, n):
         qj = A[:, j]
         for k in range(j):
-            R[k, j] = producto_vectorial(Q[:, k], qj)
+            R[k, j] = producto_interno(Q[:, k], qj)
             qj = qj - R[k, j] * Q[:, k]
         R[j, j] = norma(qj)
         qj = qj / R[j, j]
@@ -451,3 +452,55 @@ def calculaQR(A,metodo=['GS','RH'],tol=1e-12):
         return QR_con_HH(A,tol)
     else:
         return None
+
+
+#Laboratorio 6
+
+
+#TODO: usar nuestro arroba en vez de @
+def f_A(v,A):
+    w_prima = A @ v
+    if norma(w_prima) == 0:
+        return np.zeros(v.shape[0])
+    return normaliza_vector(w_prima)
+
+def f_A2(v,A):
+    return f_A(f_A(v,A),A)
+
+def metpot2k(A,tol=1e-15,K=1000):
+
+    v = normaliza_vector(np.random.uniform(0, 1, size=A.shape[0]))
+
+    v_monio = f_A2(v,A)
+    e = producto_interno(v_monio,v)
+    k = 0
+    while (abs(e-1) > tol) and (k < K):
+        v = v_monio
+        v_monio = f_A2(v,A)
+        e = producto_interno(v_monio,v)
+        k = k+1
+    lamd = v_monio @ A @ v_monio
+    return v_monio, lamd, k
+
+
+def diagRH(A,tol=1e-15,K=1000):
+    """ A simetrica tolerancia tol y entero K cantidad de iteraciones"""
+    v_monio, lamd, _ = metpot2k(A,tol,K)
+    tamanio = A.shape[0]
+    e_1 = np.eye(tamanio)[0]
+    Hv_1 = calcula_Householder_k((e_1-v_monio))
+    if tamanio == 2:
+        S = Hv_1
+        D = Hv_1 @ A @ Hv_1
+        return S,D
+    else:
+        B = Hv_1@A@(traspuesta(Hv_1))
+        A_monio = B[1:,1:]
+        S_monio, D_monio = diagRH(A_monio,tol,K)
+        D = np.zeros((tamanio,tamanio))
+        D[0,0] = lamd
+        D[1:,1:] = D_monio
+        S_aux = np.eye(tamanio)
+        S_aux[1:,1:] = S_monio
+        S = Hv_1 @ S_aux
+        return S, D
