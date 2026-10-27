@@ -2,6 +2,21 @@ import numpy as np
 
 #Laboratorio 0
 
+def arroba(A,B):
+    if A.ndim == 1:
+        A = A.reshape(1, -1)  # Vector → matriz fila
+    if B.ndim == 1:
+        B = B.reshape(-1, 1)  # Vector → matriz columna
+    if A.shape[1] != B.shape[0]:
+        raise ValueError("Las dimensiones de las matrices no son compatibles para la multiplicación.")
+    filas = A.shape[0]
+    columnas = B.shape[1]
+    C = np.zeros((filas,columnas))
+    for i in range (filas):
+        for j in range(columnas):
+            C[i,j] = sum(A[i] * B[:,j])
+    return C
+
 def traspuesta(a):
     filas,columnas = a.shape
     # inicializamos la matriz vacia
@@ -410,7 +425,7 @@ def QR_con_HH(A, tol=1e-12):
         norma_2 = norma(u)
         if norma_2 > tol:
             u = u/norma(u)
-            Hk = calcula_Householder_k(u,m-k)
+            Hk = calcula_Householder_k(u)
             i_m = np.eye(m)
             h_k_monio = np.eye(m)
             h_k_monio[0:k,0:k] = i_m[0:k,0:k]
@@ -421,12 +436,12 @@ def QR_con_HH(A, tol=1e-12):
     return Q, R
 
 
-def calcula_Householder_k(u,tamanio):
-    Imk = np.eye(tamanio)
-    Hk = np.eye(tamanio)
-    for i in range(u.shape[0]):
-        for j in range (u.shape[0]):
-            Hk[i,j] = Imk[i,j] - 2*u[i]*u[j]
+def calcula_Householder_k(u):
+    n = u.shape[0]
+    Hk = np.eye(n)
+    for i in range(n):
+        for j in range(n):
+            Hk[i,j] = Hk[i,j] - 2*u[i]*u[j]
     return Hk
 
 def calculaQR(A,metodo=['GS','RH'],tol=1e-12):
