@@ -1,0 +1,54 @@
+--se necesitan svd_reducida y invertida del labo, y la funcion obtenerQ2d
+
+#H1
+objPts1= np.array([[11,34],[0,30.34],[0,37.66],[0,24.84],[0,43.16],[5.5,24.84],[5.5,43.16],[20,34]])
+imgPts1= np.array([[513,318],[386,177],[653,183],[193,171],[842,191],[156,231],[867,251],[499,489]])
+
+Q1= obtenerQ2d(imgPts1,objPts1)
+hatU,hatSig,hatV= svd_reducida(Q1,9,tol=1e-15)
+h1= hatV[:,-1]
+H1= h1.reshape(3,3)
+
+Hinv= inversa(H1)
+
+#H2
+objPts2= np.array([[105,37.66],[105,43.16],[105,54.16],[105,68],[99.5,43.16],[99.5,24.84],[94,34],[88.5,13.84],[88.5,54.16]])
+imgPts2= np.array([[1526,431],[1472,386],[1386,307],[1306,236],[1367,571],[1231,389],[1009,472],[738,755],[736,316]])
+
+Q2= obtenerQ2d(imgPts2,objPts2)
+U,Sig,V= svd_reducida(Q2,9,tol=1e-15)
+h2= V[:,-1]
+H2= h2.reshape(3,3)
+
+Hinv= inversa(H2)
+
+#funcion para traducir puntos de plano a imagen (ec 10)
+def traducirPunto(M,p):
+    punto=np.array([p[0],p[1],1])
+    r=multiplicacionMatrizVector(M,punto)
+    return np.array([r[0]/r[2],r[1]/r[2]]) 
+
+#ej a
+Enzo= (810,543) 
+x,y= traducirPunto(Hinv,Enzo)
+#coordenadas enzo: (x,y), coordenadas linea del arco: (0,y)
+distancia= x
+
+#ej b
+pos_jugadores_img= np.array([[381,289],[376,324],[243,401],[101,534],[850,349],[807,543]])
+
+coordenadas_jugadores= []
+for (u,v) in pos_jugadores_img:
+    coordenadas_jugadores.append(traducirPunto(Hinv,(u,v)))
+coordenadas_jugadores= np.array(coordenadas_jugadores)
+
+--formar circulo en plano (10 puntos) pasarlos a pixeles, luego dibujar circulo en la imagen
+
+#ej c
+defensor= (825,326)
+xd,yd =traducirPunto(H2inv,defensor)
+xi,yi =traducirPunto(H2,(xd,0))
+xf,yf =traducirPunto(H2,(xd,68))
+
+--dibujar linea desde (xi,yi) hasta (xf,yf)
+
