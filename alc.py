@@ -505,3 +505,48 @@ def diagRH(A,tol=1e-15,K=1000):
         S_aux[1:,1:] = S_monio
         S = Hv_1 @ S_aux
         return S, D
+
+
+
+#Laboratorio 8
+
+def svd_reducida(A, k="max", tol=1e-15):
+    """
+    A: la matriz de interés (de m x n).
+    k: el número de valores singulares (y vectores) a retener.
+    tol: la tolerancia para considerar un valor singular igual a cero.
+
+    Retorna hatU (matriz de m x k), hatSig (vector de k valores
+    singulares) y hatV (matriz de n x k).
+    """
+    m,n = A.shape
+    # si m < n conviene diagonalizar A A^t (m x m) en vez de A^t A (n x n):
+    # A^t = V S U^t  =>  A = U S V^t, asi que se intercambian los roles de U y V
+    if m < n:
+        hatV, hatSig, hatU = svd_reducida(traspuesta(A), k, tol)
+        return hatU, hatSig, hatV
+
+    A_t = traspuesta(A)
+    A_tA = A_t @ A
+    V,DiagonalDeAutovalores = diagRH(A_tA, K=10000)
+
+    if k == "max":
+        k = n
+    U = np.zeros((m,n))
+    Sigma = np.zeros(n)
+    r = 0
+    for i in range(min(k,n)):
+        D_i_i = DiagonalDeAutovalores[i,i]
+        if D_i_i < tol:
+            break
+        Sigma[i] = np.sqrt(D_i_i)
+        # columna i de B = A V, normalizada
+        B_i = A @ V[:,i]
+        U[:,i] = B_i / norma(B_i)
+        r = r + 1
+
+    # recortamos a los r valores singulares no nulos
+    hatU = U[:,:r]
+    hatSig = Sigma[:r]
+    hatV = V[:,:r]
+    return hatU, hatSig, hatV
