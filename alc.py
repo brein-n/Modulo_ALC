@@ -438,6 +438,7 @@ def QR_con_HH(A, tol=1e-12):
 
 
 def calcula_Householder_k(u):
+    u = u / norma(u)
     n = u.shape[0]
     Hk = np.eye(n)
     for i in range(n):
