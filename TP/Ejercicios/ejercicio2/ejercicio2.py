@@ -1,45 +1,49 @@
 import numpy as np
-from dataclasses import dataclass
 
+# Le saqué el limite de 12, porque la funcion esta definida para n puntos y yo habia
+#Especificado para una matriz de 24x12
+def obtenerQ3d(imgPts, objPts) -> np.ndarray:
+    """
+    Arma la matriz Q del sistema homogeneo Qm = 0 del DLT 3D (ecuación 6).
 
-@dataclass
-class PuntoImagen:
-    u: float
-    v: float
+    Parámetros:
+        imgPts: array (n, 2) con las coordenadas (u_i, v_i) de cada punto en la imagen, en píxeles.
+        objPts: array (n, 3) con las coordenadas (U_i, V_i, W_i) de cada punto en el mundo real.
+                El punto i de imgPts debe corresponder al punto i de objPts.
+    Retorna:
+        Q: array (2n, 12). Las filas 2i y 2i+1 son las dos ecuaciones del punto i.
+    """
+    imgPts = np.asarray(imgPts, dtype=float)
+    objPts = np.asarray(objPts, dtype=float)
+    n = objPts.shape[0]
 
+    if imgPts.shape != (n, 2) or objPts.shape != (n, 3):
+        raise ValueError("imgPts debe ser (n, 2) y objPts (n, 3), con el mismo n")
 
-@dataclass
-class PuntoReal:
-    U: float
-    V: float
-    W: float
+    Q = np.zeros((2 * n, 12))
 
+    for i in range(n):
+        # Coordenadas del punto i en la imagen
+        ui = imgPts[i, 0]
+        vi = imgPts[i, 1]
 
-def construir_Q(puntos_imagen: list[PuntoImagen],puntos_reales: list[PuntoReal]) -> np.ndarray:
+        # Coordenadas del punto i en el mundo real
+        Ui = objPts[i, 0]
+        Vi = objPts[i, 1]
+        Wi = objPts[i, 2]
 
-    if len(puntos_imagen) != 12 or len(puntos_reales) != 12:
-        raise ValueError("Ambas listas deben contener exactamente 12 puntos")
-
-    Q = np.zeros((24, 12))
-
-    for i in range(12):
-        ui = puntos_imagen[i].u
-        vi = puntos_imagen[i].v
-
-        Ui = puntos_reales[i].U
-        Vi = puntos_reales[i].V
-        Wi = puntos_reales[i].W
-
-        Q[2*i] = [
-        Ui, Vi, Wi, 1,
-        0, 0, 0, 0,
-        -ui*Ui, -ui*Vi, -ui*Wi, -ui
+        # Ecuación de u: [P_i^T, 0^T, -u_i P_i^T]
+        Q[2 * i] = [
+            Ui, Vi, Wi, 1,
+            0, 0, 0, 0,
+            -ui * Ui, -ui * Vi, -ui * Wi, -ui
         ]
 
-        Q[2*i + 1] = [
-        0, 0, 0, 0,
-        Ui, Vi, Wi, 1,
-        -vi*Ui, -vi*Vi, -vi*Wi, -vi
+        # Ecuación de v: [0^T, P_i^T, -v_i P_i^T]
+        Q[2 * i + 1] = [
+            0, 0, 0, 0,
+            Ui, Vi, Wi, 1,
+            -vi * Ui, -vi * Vi, -vi * Wi, -vi
         ]
 
     return Q
