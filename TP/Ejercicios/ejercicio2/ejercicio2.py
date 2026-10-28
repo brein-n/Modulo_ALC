@@ -1,5 +1,7 @@
 import numpy as np
+from alc import svd_reducida
 
+#a)
 # Le saqué el limite de 12, porque la funcion esta definida para n puntos y yo habia
 #Especificado para una matriz de 24x12
 def obtenerQ3d(imgPts, objPts) -> np.ndarray:
@@ -47,3 +49,14 @@ def obtenerQ3d(imgPts, objPts) -> np.ndarray:
         ]
 
     return Q
+
+
+#b)
+def resolverDLT3D(Q):
+    # el vector que minimiza ||Qm||^2 es el autovector asociado al menor valor singular
+    # que este es el último autovector de la matriz V
+    _,_,V = svd_reducida(Q)
+    M = V[:-1].reshape((3,4))
+    # reshape ((3,4)) toma la matriz [1,2,3,4,5,6,7,8,9,10,11,12]
+    # y la convierte en una matriz de 3x4 de la forma [[1,2,3,4],[5,6,7,8],[9,10,11,12]]
+    return  M
