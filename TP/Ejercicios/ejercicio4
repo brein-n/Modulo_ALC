@@ -12,7 +12,7 @@ objPts2= np.array([[105,37.66],[105,43.16],[105,54.16],[105,68],[99.5,43.16],[99
 imgPts2= np.array([[1526,431],[1472,386],[1386,307],[1306,236],[1231,389],[1367,571],[1009,472],[738,755],[736,316]])
 
 #crear H1
-Q1= obtenerQ2d(imgPts1,objPts1) #guarda la informacion de imgPts y objPts, para generar el sistema lineal Q.h=0. Cada fila de Q es una ecuaucion con las condiciones que debe cumplir H para traducir los puntos.
+Q1= obtenerQ2d(imgPts1,objPts1) #guarda la informacion de imgPts y objPts, para generar el sistema homogeneo Q.h=0. Cada fila de Q es una ecuaucion con las condiciones que debe cumplir H para traducir los puntos.
 hatU, hatSig, hatV = svd_reducida(Q1,9,tol=1e-15) #las columnas de hatV son los vectores singulares de Q, ordenados de mayor a menor segun los valores singulares.
 h1=hatV[:,-1] #como necesitamos el vector singular asociado al valor mas chico, agarramos la ultima columna. (ec 8)
 H1=h1.reshape(3,3) #h1 tiene los 9 elementos de H, pero ordenados en una fila, los acomodamos para que quede una matriz de 3x3.
