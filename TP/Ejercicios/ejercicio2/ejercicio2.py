@@ -76,10 +76,22 @@ def devolverMatricesCalibracion3D(M):
     t = arroba(K,M2)
     return R,t,K
 
+# Cada fila de este archivo contiene las coordenadas de los puntos detectados en la imagen
+# de la forma u1 v1 u2 v2 u3 v3 ... u12 v12
+imgPts = np.loadtxt('/home/luis/PycharmProjects/Modulo_ALC/TP/calib/3d/detected_corners.txt')
+firstImgPts = imgPts[0]
+U = firstImgPts[0::2]
+V = firstImgPts[1::2]
 
-M_prueba = np.array([
-    [3504, 28158, 1824, 79332],
-    [1200, 1140, 26880, 91080],
-    [31, 8, 8, 165],
-])
-devolverMatricesCalibracion3D(M_prueba)
+print(len(U))
+print(len(V))
+print(U)
+print(V)
+objPts = np.loadtxt('/home/luis/PycharmProjects/Modulo_ALC/TP/calib/3d/p_W_corners.txt',delimiter=',')
+U, V, W = objPts[:,0], objPts[:,1],objPts[:,2]
+print(W)
+
+
+Q3D = obtenerQ3d(zip(U,V),objPts)
+
+print(Q3D)

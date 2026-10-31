@@ -12,3 +12,10 @@ y u2,v2 son las coordenadas del punto 2
 y asi sucesivamente
 
 entonces con una sola fila de ese dataset  y el p_w_corners se puede armar toda la matriz Q
+
+preguntas :
+
+* como calcular alfa u igual a alfa v y gamma = 0
+* el metodo que tengo en latex y en la tablet implican  asumir alfa u alfa v mayores que cero
+
+* uso todas las imagenenes de la carpeta o con una ya es suficiente para calcular la calibracion ?
