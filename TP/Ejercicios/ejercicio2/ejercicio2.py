@@ -1,9 +1,10 @@
 import numpy as np
-from alc import svd_reducida
+from alc import svd_reducida, inversa,calculaQR,traspuesta,arroba
 
-#a)
+
+# a)
 # Le saqué el limite de 12, porque la funcion esta definida para n puntos y yo habia
-#Especificado para una matriz de 24x12
+# Especificado para una matriz de 24x12
 def obtenerQ3d(imgPts, objPts) -> np.ndarray:
     """
     Arma la matriz Q del sistema homogeneo Qm = 0 del DLT 3D (ecuación 6).
@@ -51,12 +52,34 @@ def obtenerQ3d(imgPts, objPts) -> np.ndarray:
     return Q
 
 
-#b)
+# b)
 def resolverDLT3D(Q):
     # el vector que minimiza ||Qm||^2 es el autovector asociado al menor valor singular
     # que este es el último autovector de la matriz V
-    _,_,V = svd_reducida(Q)
-    M = V[:-1].reshape((3,4))
+    _, _, V = svd_reducida(Q)
+    M = V[:-1].reshape((3, 4))
     # reshape ((3,4)) toma la matriz [1,2,3,4,5,6,7,8,9,10,11,12]
     # y la convierte en una matriz de 3x4 de la forma [[1,2,3,4],[5,6,7,8],[9,10,11,12]]
-    return  M
+    return M
+
+
+# c)
+
+def devolverMatricesCalibracion3D(M):
+
+    M1 = M[0:3,0:3]
+    M2 = M[:,3]
+    M1Inversa = inversa(M1)
+    R_traspuesta,K_inversa = calculaQR(M1Inversa,'GS')
+    R = traspuesta(R_traspuesta)
+    K = inversa(K_inversa)
+    t = arroba(K,M2)
+    return R,t,K
+
+
+M_prueba = np.array([
+    [3504, 28158, 1824, 79332],
+    [1200, 1140, 26880, 91080],
+    [31, 8, 8, 165],
+])
+devolverMatricesCalibracion3D(M_prueba)
