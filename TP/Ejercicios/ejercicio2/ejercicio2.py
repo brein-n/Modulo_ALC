@@ -96,8 +96,13 @@ print(Q3D.shape)
 print(Q3D)
 M = resolverDLT3D(Q3D)
 print(M)
+# Los primeros 3 valores de la ultima fila de M son la ultima fila de R (pag. 11), pero M sale
+# con ||m|| = 1, no con esa fila de norma 1. Dividimos M por la norma 2 de esa fila para que
+# sea consistente con R ortonormal (multiplicar por un escalar no cambia la solucion de Qm = 0)
+MPrima = M / norma(M[2, 0:3])
+print(MPrima)
 
-R, t , K = devolverMatricesCalibracion3D(M)
+R, t , K = devolverMatricesCalibracion3D(MPrima)
 print(R)
 print(t)
 print(K)
