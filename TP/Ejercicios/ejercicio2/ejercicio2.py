@@ -1,6 +1,5 @@
 import numpy as np
-from alc import svd_reducida, inversa,calculaQR,traspuesta,arroba
-
+from alc import svd_reducida, inversa,calculaQR,traspuesta,arroba, norma
 
 # a)
 # Le saqué el limite de 12, porque la funcion esta definida para n puntos y yo habia
@@ -57,7 +56,7 @@ def resolverDLT3D(Q):
     # el vector que minimiza ||Qm||^2 es el autovector asociado al menor valor singular
     # que este es el último autovector de la matriz V
     _, _, V = svd_reducida(Q)
-    M = V[:-1].reshape((3, 4))
+    M = V[:,-1].reshape((3, 4))
     # reshape ((3,4)) toma la matriz [1,2,3,4,5,6,7,8,9,10,11,12]
     # y la convierte en una matriz de 3x4 de la forma [[1,2,3,4],[5,6,7,8],[9,10,11,12]]
     return M
@@ -73,25 +72,32 @@ def devolverMatricesCalibracion3D(M):
     R_traspuesta,K_inversa = calculaQR(M1Inversa,'GS')
     R = traspuesta(R_traspuesta)
     K = inversa(K_inversa)
-    t = arroba(K,M2)
+    t = arroba(K_inversa,M2)
     return R,t,K
 
 # Cada fila de este archivo contiene las coordenadas de los puntos detectados en la imagen
 # de la forma u1 v1 u2 v2 u3 v3 ... u12 v12
-imgPts = np.loadtxt('/home/luis/PycharmProjects/Modulo_ALC/TP/calib/3d/detected_corners.txt')
-firstImgPts = imgPts[0]
-U = firstImgPts[0::2]
-V = firstImgPts[1::2]
+detectedCorners = np.loadtxt('/home/luis/PycharmProjects/Modulo_ALC/TP/calib/3d/detected_corners.txt')
+# Con una imagen alcanza: tomamos la primera fila y la pasamos a (12, 2),
+# reshape la recorre por filas, asi que queda la fila i = (u_i, v_i)
+imgPts = detectedCorners[0].reshape((-1, 2))
+print(imgPts.shape)
+print(imgPts)
 
-print(len(U))
-print(len(V))
-print(U)
-print(V)
+# Cada fila de este archivo contiene las coordenadas U_i, V_i, W_i del punto i en el mundo real
 objPts = np.loadtxt('/home/luis/PycharmProjects/Modulo_ALC/TP/calib/3d/p_W_corners.txt',delimiter=',')
-U, V, W = objPts[:,0], objPts[:,1],objPts[:,2]
-print(W)
+print(objPts.shape)
+print(objPts)
 
 
-Q3D = obtenerQ3d(zip(U,V),objPts)
+Q3D = obtenerQ3d(imgPts,objPts)
 
+print(Q3D.shape)
 print(Q3D)
+M = resolverDLT3D(Q3D)
+print(M)
+
+R, t , K = devolverMatricesCalibracion3D(M)
+print(R)
+print(t)
+print(K)
