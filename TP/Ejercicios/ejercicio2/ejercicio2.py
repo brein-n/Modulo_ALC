@@ -1,9 +1,7 @@
 import numpy as np
 from alc import svd_reducida, inversa,calculaQR,traspuesta,arroba, norma
 
-# a)
-# Le saqué el limite de 12, porque la funcion esta definida para n puntos y yo habia
-# Especificado para una matriz de 24x12
+
 def obtenerQ3d(imgPts, objPts) -> np.ndarray:
     """
     Arma la matriz Q del sistema homogeneo Qm = 0 del DLT 3D (ecuación 6).
@@ -65,9 +63,9 @@ def resolverDLT3D(Q):
 # c)
 
 def devolverMatricesCalibracion3D(M):
-
-    M1 = M[0:3,0:3]
-    M2 = M[:,3]
+    M_monio = M / norma(M[2, 0:3])
+    M1 = M_monio[0:3,0:3]
+    M2 = M_monio[:,3]
     M1Inversa = inversa(M1)
     R_traspuesta,K_inversa = calculaQR(M1Inversa,'GS')
     R = traspuesta(R_traspuesta)
