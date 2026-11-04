@@ -550,3 +550,9 @@ def svd_reducida(A, k="max", tol=1e-15):
     hatSig = Sigma[:r]
     hatV = V[:,:r]
     return hatU, hatSig, hatV
+
+#me lleve esta funcion aca para hacer andar el ejercicio 5, cuando este implementado en el ejercicio 4 en la notebook final ya esta
+def traducirPunto(M,p):
+    punto=np.array([p[0],p[1],1]) #agregamos un 1 en la 3era coordenada porque sino no se podria multiplicar por la matriz 3x3.
+    r=multiplicacionMatrizVector(M,punto) #r=λ[u,v,1]
+    return np.array([r[0]/r[2],r[1]/r[2]]) #dividimos por la 3era coordenada para sacar el λ, y quedarnos con (u,v).
