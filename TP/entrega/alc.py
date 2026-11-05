@@ -557,3 +557,168 @@ def traducirPunto(M,p):
     punto=np.array([p[0],p[1],1]) #agregamos un 1 en la 3era coordenada porque sino no se podria multiplicar por la matriz 3x3.
     r=multiplicacionMatrizVector(M,punto) #r=λ[u,v,1]
     return np.array([r[0]/r[2],r[1]/r[2]]) #dividimos por la 3era coordenada para sacar el λ, y quedarnos con (u,v).
+
+
+def obtenerQ2d(imgPts,objPts):
+  matriz_Q=[] #Armo mi matriz Q en donde voy a guardar las filas creadas
+
+  for i in range(len(objPts)): #Separo las coordenadas y aplico el algoritmo
+    U= objPts[i][0]
+    V= objPts[i][1]
+    u= imgPts[i][0]
+    v= imgPts[i][1]
+
+    fila_1=[U, V, 1, 0, 0, 0, -u*U, -u*V, -u]
+    fila_2=[0, 0, 0, U, V, 1, -v*U, -v*V, -v]
+
+    matriz_Q.append(fila_1)
+    matriz_Q.append(fila_2)
+
+  return np.array(matriz_Q)
+
+
+def encontrar_vector_minimo(array):
+    # Armo mi matriz Q*T.Q=A
+    Q_final = traspuesta(array) @ array
+    # Llamo a la funcion diagRH  para quedarme con el menor autovalor
+    S, D = diagRH(Q_final)
+
+    menor = D[0, 0]
+    indice = 0
+    for i in range(1, D.shape[0]):  # Busco el menor autovalor en la diagonal
+        if D[i][i] < menor:
+            menor = D[i, i]
+            indice = i
+    vector_h = S[:, indice]
+    return vector_h  # No lo transformo asi puedo reutilizar esta funcion
+
+def armarA(Hlst):
+    filas_A = []
+
+    for H in Hlst:
+        # Primera columna de la homografía
+        a, b, c = H[:, 0]  #selecciona todas  las filas agarra la primer columna
+        # Segunda columna de la homografía
+        d, e, f = H[:, 1] #selecciona todas las filas agarra la segunda columna
+
+        #c1*TxBxc2
+        fila_1 = [
+            a*d,
+            a*e + b*d,
+            b*e,
+            a*f + c*d,
+            b*f + c*e,
+            c*f
+        ]
+        #c1*TxBxc1-c2*TxBxc2=0
+        #Ver demo despues pero se re entendio
+        fila_2 = [
+            a*a - d*d,
+            2*(a*b - d*e),
+            b*b - e*e,
+            2*(a*c - d*f),
+            2*(b*c - e*f),
+            c*c - f*f
+        ]
+        filas_A.append(fila_1)
+        filas_A.append(fila_2)
+    return np.array(filas_A)
+
+
+def normalizar_diagonal(B, autovalores, tol=1e-12):
+    lista_positivo = []
+    lista_negativo = []
+    lista_cero = []
+
+    for valor in autovalores:
+        if valor > tol:
+            lista_positivo.append(valor)
+        elif valor < -tol:
+            lista_negativo.append(valor)
+        else:
+            lista_cero.append(valor)
+
+    if len(lista_cero) > 0:
+        # raise lanza una excepción(un problema  ocurrido en la ejecucion)
+        # valueerror tipo de exepcion
+        raise ValueError("B tiene autovalores cercanos a cero")
+
+    elif len(lista_positivo) > 0 and len(lista_negativo) > 0:
+        raise ValueError("B es indefinida: no se puede aplicar Cholesky")
+
+    elif len(lista_negativo) > 0:
+        return -B
+
+    else:
+        return B
+
+
+def calcularK2D(A):
+    b_final= encontrar_vector_minimo(A)
+    B = np.array([
+    [b_final[0], b_final[1], b_final[3]],
+    [b_final[1], b_final[2], b_final[4]],
+    [b_final[3], b_final[4], b_final[5]]])
+    #Necesito aplicar cholesky para ello se que B
+    _, D =diagRH(B)
+
+    lista_autovalores=[]
+    for i in range(D.shape[0]):
+        lista_autovalores.append(D[i][i])
+    B=normalizar_diagonal(B,lista_autovalores)
+
+    #Aca tengo que aplicar el algoritmo de cholesky (luego lo creo)
+    L = np.linalg.cholesky(B)
+    K  = traspuesta(inversa(L))
+    if K[2][2]!=1:
+        K=K/K[2][2]
+    return K
+
+
+def obtenerPose2D(H, K):
+    K_inv = inversa(K)
+    c1 = H[:, 0]
+    c2 = H[:, 1]
+    c3 = H[:, 2]
+
+    # Multiplicar por la inversa de K
+    v1 = K_inv @ c1
+    v2 = K_inv @ c2
+    v3 = K_inv @ c3
+
+    # Calcular el factor de escala
+    if norma(v1) < 1e-12:
+        raise ValueError("No se puede calcular lambda")
+
+    lamda = 1 / norma(v1)
+    if (lamda * v3)[2] < 0:  # Chequeo que el valor de lamda sea positivo para  que  la camara apunta adelante
+        lamda = -lamda
+
+    # Recuperar r1, r2 y t
+    r1 = lamda * v1
+    r2 = lamda * v2
+    t = lamda * v3
+
+    r1 = r1 / norma(r1)  # Normalizo ||r1||
+    r2 = r2 - producto_interno(r1, r2) * r1
+
+    if norma(r2) < 1e-12:
+        raise ValueError("No se puede construir la rotación")
+
+    r2 = r2 / norma(r2)  # Normalizo ||r2||
+
+    # Armo ||r3|| como r1Xr2 ya que tiene que ser  ortogonal
+    r3 = np.array([
+        r1[1] * r2[2] - r1[2] * r2[1],
+        r1[2] * r2[0] - r1[0] * r2[2],
+        r1[0] * r2[1] - r1[1] * r2[0]])
+
+    # Contruyo la matriz de rotación
+    R = np.zeros((3, 3))
+
+    for i in range(3):
+        R[i, 0] = r1[i]
+        R[i, 1] = r2[i]
+        R[i, 2] = r3[i]
+
+    return R, t

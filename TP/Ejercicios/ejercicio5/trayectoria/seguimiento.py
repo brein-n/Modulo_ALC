@@ -9,7 +9,7 @@ Para cada objetivo y cada imagen:
   3. Seguimiento: en los frames siguientes se predice dónde debería estar el rectángulo
      (velocidad constante a partir de las dos últimas detecciones) y se elige el
      candidato con mayor IoU contra esa predicción.
-  4. Se dibuja el rectángulo, su centro (u, v) y la trayectoria acumulada.
+  4. Se dibuja el rectángulo, su centro (u, v) y la trayectoria_ejercicio_5 acumulada.
 
 Si en algún frame no se detecta, el centro se interpola linealmente entre los frames
 vecinos y queda marcado como "interpolado" en el CSV.
@@ -29,7 +29,7 @@ Uso:
 Salida en <salida>/<objetivo>/:
     frames/          imágenes anotadas
     centros.csv      rectángulo y centro (u, v) por imagen
-    trayectoria.png  trayectoria completa sobre el último frame
+    trayectoria_ejercicio_5.png  trayectoria_ejercicio_5 completa sobre el último frame
 """
 
 import argparse
@@ -270,7 +270,7 @@ def seguir(nombre, cfg, modelo, rutas, imagenes, args):
         dibujar(anotada, r, trayectoria, cfg["color_dibujo"])
         cv2.imwrite(str(salida / "frames" / r["archivo"]), anotada)
 
-    guardar_trayectoria(salida / "trayectoria.png", imagenes[-1], registros)
+    guardar_trayectoria(salida / "trayectoria_ejercicio_5.png", imagenes[-1], registros)
     guardar_csv(salida / "centros.csv", registros)
 
     n_yolo = sum(r["metodo"] == "yolo" for r in registros)
