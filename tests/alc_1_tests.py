@@ -1,7 +1,7 @@
 import numpy as np
 #Tests de las funciones de ALC - labo 1
 
-from alc import error, error_relativo, matricesIguales
+from TP.entrega.alc import error, error_relativo, matricesIguales
 
 
 def sonIguales(x, y, atol=1e-08):

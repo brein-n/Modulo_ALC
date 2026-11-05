@@ -1,7 +1,7 @@
 import numpy as np
 #Tests de las funciones de ALC - labo 4
 
-from alc import calculaLU , res_tri ,inversa, calculaLDV, esSDP
+from TP.entrega.alc import calculaLU , res_tri ,inversa, calculaLDV, esSDP
 
 
 # TESTS L04-LU

@@ -1,7 +1,7 @@
 import numpy as np
 #Tests de las funciones de ALC - labo 3
 
-from alc import normaMatMC, normaExacta, condMC, condExacta, norma, normaliza
+from TP.entrega.alc import normaMatMC, normaExacta, condMC, condExacta, norma, normaliza
 
 
 print("\n Iniciando tests labo 3")

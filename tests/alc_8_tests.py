@@ -1,5 +1,5 @@
 import numpy as np
-from alc import svd_reducida
+from TP.entrega.alc import svd_reducida
 
 # Tests L08
 

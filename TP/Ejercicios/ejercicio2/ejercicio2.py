@@ -1,5 +1,5 @@
 import numpy as np
-from alc import svd_reducida, inversa,calculaQR,traspuesta,arroba, norma
+from TP.entrega.alc import svd_reducida, inversa,calculaQR,traspuesta,arroba, norma
 
 
 def obtenerQ3d(imgPts, objPts) -> np.ndarray:
@@ -70,7 +70,6 @@ def devolverMatricesCalibracion3D(M):
     R_traspuesta,K_inversa = calculaQR(M1Inversa,'GS')
     R = traspuesta(R_traspuesta)
     K = inversa(K_inversa)
-    t = arroba(K_inversa,M2)
     return R,t,K
 
 # Cada fila de este archivo contiene las coordenadas de los puntos detectados en la imagen

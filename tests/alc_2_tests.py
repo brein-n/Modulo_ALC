@@ -1,7 +1,7 @@
 import numpy as np
 #Tests de las funciones de ALC - labo 2
 
-from alc import rota, escala, rota_y_escala, afin, trans_afin
+from TP.entrega.alc import rota, escala, rota_y_escala, afin, trans_afin
 
 
 # --- Tests extraídos del enunciado ---

@@ -1,7 +1,7 @@
 # Tests L05-QR:
 
 import numpy as np
-from alc import QR_con_GS, QR_con_HH, calculaQR
+from TP.entrega.alc import QR_con_GS, QR_con_HH, calculaQR
 # --- Matrices de prueba ---
 A2 = np.array([[1., 2.],
                [3., 4.]])
