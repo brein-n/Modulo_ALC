@@ -722,3 +722,50 @@ def obtenerPose2D(H, K):
         R[i, 2] = r3[i]
 
     return R, t
+    
+def normalizar_diagonal(B, autovalores, tol=1e-12):
+    lista_positivo = []
+    lista_negativo = []
+    lista_cero = []
+    for valor in autovalores:
+        if valor > tol:
+            lista_positivo.append(valor)
+        elif valor < -tol:
+            lista_negativo.append(valor)
+        else:
+            lista_cero.append(valor)
+    if len(lista_cero) > 0:
+        raise ValueError("B tiene autovalores cercanos a cero")
+    elif len(lista_positivo) > 0 and len(lista_negativo) > 0:
+        raise ValueError("B es indefinida: no se puede aplicar Cholesky")
+    elif len(lista_negativo) > 0:
+        return -B
+    else:
+        return B
+def cholesky(B):
+    B = np.array(B, dtype=float)
+    if B.ndim != 2 or B.shape[0] != B.shape[1]:
+        raise ValueError("B debe ser una matriz cuadrada")
+    if not matricesIguales(B,traspuesta(B)):
+        raise ValueError("B debe ser simetrica")
+
+    n = B.shape[0]
+    L = np.zeros((n, n))
+
+    for i in range(n):
+        for j in range(i + 1):
+            # Sumo los productos de las entradas ya calculadas.
+            suma = 0.0
+            for k in range(j):
+                suma += L[i, k] * L[j, k]
+
+            if i == j:
+                # En la diagonal tomo la raiz del valor restante.
+                valor = B[i, i] - suma
+                if valor <= 0:
+                    raise ValueError("B debe ser definida positiva")
+                L[i, j] = np.sqrt(valor)
+            else:
+                # Debajo de la diagonal despejo usando L[j, j].
+                L[i, j] = (B[i, j] - suma) / L[j, j]
+    return L
