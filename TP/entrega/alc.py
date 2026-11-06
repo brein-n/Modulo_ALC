@@ -742,6 +742,7 @@ def normalizar_diagonal(B, autovalores, tol=1e-12):
         return -B
     else:
         return B
+        
 def cholesky(B):
     B = np.array(B, dtype=float)
     if B.ndim != 2 or B.shape[0] != B.shape[1]:
