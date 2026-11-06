@@ -722,3 +722,23 @@ def obtenerPose2D(H, K):
         R[i, 2] = r3[i]
 
     return R, t
+
+
+def pseudoinversa(A):
+    
+    hatU, hatSig, hatV = svd_reducida(A)
+    
+    for i in range(len(hatSig)):
+        valor_singular = hatSig[i][i]
+        
+        hatSig[i][i] = 1 / valor_singular
+        
+    Sig_inv = hatSig
+    V_inv = traspuesta(hatV)
+    U_inv = traspuesta(hatU)
+    
+    x = arroba(V_inv, Sig_inv)
+    
+    pseudo = arroba(x, U_inv)
+    
+    return pseudo
