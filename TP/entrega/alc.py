@@ -700,18 +700,6 @@ def resolverDLT3D(Q):
     return M
 
 
-# def devolverMatricesCalibracion3D(M):
-#     M_monio = M / norma(M[2, 0:3])
-#     M1 = M_monio[0:3,0:3]
-#     M2 = M_monio[:,3]
-#     M1Inversa = inversa(M1)
-#     R_traspuesta,K_inversa = calculaQR(M1Inversa,'GS')
-#     R = traspuesta(R_traspuesta)
-#     K = inversa(K_inversa)
-#     t = arroba(K_inversa,M2)
-#     return R,t,K
-
-
 def devolverMatricesCalibracion3D(M, simple=True):
     M_monio = M / norma(M[2, 0:3])
 
