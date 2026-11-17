@@ -744,7 +744,6 @@ def devolverMatricesCalibracion3D(M, simple=True):
         alfa_v = np.sqrt(producto_interno(aux, aux))
 
         R[1] = aux / alfa_v
-        t[1] = (M_monio[1, 3] - v0 * t[2]) / alfa_v
 
         # Fila 1: m1 = alfa_u r1 + gamma r2 + u0 r3
         #         m14 = alfa_u t1 + gamma t2 + u0 t3
@@ -754,6 +753,12 @@ def devolverMatricesCalibracion3D(M, simple=True):
         alfa_u = np.sqrt(producto_interno(aux, aux))
 
         R[0] = aux / alfa_u
+
+        gamma = 0
+        alfa_u = alfa_v
+
+        # Cuarta columna: despejamos t con los parámetros ya restringidos
+        t[1] = (M_monio[1, 3] - v0 * t[2]) / alfa_v
         t[0] = (M_monio[0, 3] - gamma * t[1] - u0 * t[2]) / alfa_u
 
         # Armamos K con los parámetros que despejamos
