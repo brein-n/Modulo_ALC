@@ -641,3 +641,127 @@ def pseudoinversa(A):
     pseudo = arroba(x, U_inv)
     
     return pseudo
+
+
+#Ejercicio 2
+
+def obtenerQ3d(imgPts, objPts) -> np.ndarray:
+    """
+    Arma la matriz Q del sistema homogeneo Qm = 0 del DLT 3D (ecuación 6).
+
+    Parámetros:
+        imgPts: array (n, 2) con las coordenadas (u_i, v_i) de cada punto en la imagen, en píxeles.
+        objPts: array (n, 3) con las coordenadas (U_i, V_i, W_i) de cada punto en el mundo real.
+                El punto i de imgPts debe corresponder al punto i de objPts.
+    Retorna:
+        Q: array (2n, 12). Las filas 2i y 2i+1 son las dos ecuaciones del punto i.
+    """
+    imgPts = np.asarray(imgPts, dtype=float)
+    objPts = np.asarray(objPts, dtype=float)
+    n = objPts.shape[0]
+
+    if imgPts.shape != (n, 2) or objPts.shape != (n, 3):
+        raise ValueError("imgPts debe ser (n, 2) y objPts (n, 3), con el mismo n")
+
+    Q = np.zeros((2 * n, 12))
+
+    for i in range(n):
+        # Coordenadas del punto i en la imagen
+        ui = imgPts[i, 0]
+        vi = imgPts[i, 1]
+
+        # Coordenadas del punto i en el mundo real
+        Ui = objPts[i, 0]
+        Vi = objPts[i, 1]
+        Wi = objPts[i, 2]
+
+        Q[2 * i] = [
+            Ui, Vi, Wi, 1,
+            0, 0, 0, 0,
+            -ui * Ui, -ui * Vi, -ui * Wi, -ui
+        ]
+
+        Q[2 * i + 1] = [
+            0, 0, 0, 0,
+            Ui, Vi, Wi, 1,
+            -vi * Ui, -vi * Vi, -vi * Wi, -vi
+        ]
+
+    return Q
+
+
+def resolverDLT3D(Q):
+    # el vector que minimiza ||Qm||^2 es el autovector asociado al menor valor singular
+    # que este es el último autovector de la matriz V
+    _, _, V = svd_reducida(Q)
+    M = V[:,-1].reshape((3, 4))
+    # reshape ((3,4)) toma la matriz [1,2,3,4,5,6,7,8,9,10,11,12]
+    # y la convierte en una matriz de 3x4 de la forma [[1,2,3,4],[5,6,7,8],[9,10,11,12]]
+    return M
+
+
+# def devolverMatricesCalibracion3D(M):
+#     M_monio = M / norma(M[2, 0:3])
+#     M1 = M_monio[0:3,0:3]
+#     M2 = M_monio[:,3]
+#     M1Inversa = inversa(M1)
+#     R_traspuesta,K_inversa = calculaQR(M1Inversa,'GS')
+#     R = traspuesta(R_traspuesta)
+#     K = inversa(K_inversa)
+#     t = arroba(K_inversa,M2)
+#     return R,t,K
+
+
+def devolverMatricesCalibracion3D(M, simple=True):
+    M_monio = M / norma(M[2, 0:3])
+
+    if simple:
+        M1 = M_monio[0:3, 0:3]
+        M2 = M_monio[:, 3]
+
+        M1Inversa = inversa(M1)
+        R_traspuesta, K_inversa = calculaQR(M1Inversa, 'GS')
+
+        R = traspuesta(R_traspuesta)
+        K = inversa(K_inversa)
+        t = arroba(K_inversa, M2)
+
+        return R, t, K
+
+    else:
+        R = np.zeros((3, 3))
+        t = np.zeros((3, 1))
+        K = np.zeros((3, 3))
+
+        # Fila 3: m3 = r3, m34 = t3
+        R[2] = M_monio[2, 0:3]
+        t[2] = M_monio[2, 3]
+
+        # Fila 2: m2 = alfa_v r2 + v0 r3
+        #         m24 = alfa_v t2 + v0 t3
+        v0 = producto_interno(M_monio[1, 0:3], R[2])
+        aux = M_monio[1, 0:3] - v0 * R[2]
+        alfa_v = np.sqrt(producto_interno(aux, aux))
+
+        R[1] = aux / alfa_v
+        t[1] = (M_monio[1, 3] - v0 * t[2]) / alfa_v
+
+        # Fila 1: m1 = alfa_u r1 + gamma r2 + u0 r3
+        #         m14 = alfa_u t1 + gamma t2 + u0 t3
+        u0 = producto_interno(M_monio[0, 0:3], R[2])
+        gamma = producto_interno(M_monio[0, 0:3], R[1])
+        aux = M_monio[0, 0:3] - gamma * R[1] - u0 * R[2]
+        alfa_u = np.sqrt(producto_interno(aux, aux))
+
+        R[0] = aux / alfa_u
+        t[0] = (M_monio[0, 3] - gamma * t[1] - u0 * t[2]) / alfa_u
+
+        # Armamos K con los parámetros que despejamos
+        K[0, 0] = alfa_u
+        K[0, 1] = gamma
+        K[0, 2] = u0
+        K[1, 1] = alfa_v
+        K[1, 2] = v0
+        K[2, 2] = 1
+
+        return R, t, K
