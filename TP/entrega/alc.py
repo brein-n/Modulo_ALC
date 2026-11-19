@@ -627,18 +627,17 @@ def pseudoinversa(A):
     
     hatU, hatSig, hatV = svd_reducida(A)
     
-    for i in range(len(hatSig)):
-        valor_singular = hatSig[i][i]
-        
-        hatSig[i][i] = 1 / valor_singular
-        
-    Sig_inv = hatSig
-    V_inv = traspuesta(hatV)
-    U_inv = traspuesta(hatU)
+    r = len(hatSig)
+    Sig_inv = np.zeros((r,r))
     
-    x = arroba(V_inv, Sig_inv)
+    for i in range(r):
+        Sig_inv[i][i] = 1.0 / hatSig[i]
+        
+    U_t = traspuesta(hatU)
     
-    pseudo = arroba(x, U_inv)
+    x = arroba(hatV, Sig_inv)
+    
+    pseudo = arroba(x, U_t)
     
     return pseudo
 
