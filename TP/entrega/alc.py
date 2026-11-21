@@ -647,7 +647,7 @@ def pseudoinversa(A):
     return pseudo
 
 
-#Ejercicio 2
+# Ejercicio 2:
 
 def obtenerQ3d(imgPts, objPts) -> np.ndarray:
     """
@@ -762,3 +762,220 @@ def devolverMatricesCalibracion3D(M, simple=True):
         K[2, 2] = 1
 
         return R, t, K
+    
+
+# Ejercicio 6:
+
+def calculoLambdaMu(I0, J0):
+    # Podemos usar el metodo sqrt de numpy que esta permitido
+    # CORRECCION    
+    C_2 = norma(J0, 2) ** 2 - norma(I0, 2) ** 2 - 2j * producto_interno(I0, J0)
+    
+    raiz = np.sqrt(C_2) # me da una sola raiz pero el ejercicio me pide las dos
+
+    # CORRECCION
+    lammbda = raiz.real
+    mu = raiz.imag 
+    
+    return (lammbda, mu), (-lammbda, -mu)
+
+
+def calcularSalidaPOSIT(Is, Js, fx, m0, M0):
+    # Is y Js son vectores
+    # M_0 = [X_0, Y_0, Z_0]
+    
+    norma_Is = norma(Is, 2)
+    norma_Js = norma(Js, 2)
+    
+    Z_0 = fx / norma_Is
+    
+    i = Is / norma_Is
+    j = Js / norma_Js
+    
+    
+    # CORRECCION
+    # Podemos calcular el producto vectorial directamente para encontrar el
+    # vector que falta
+    
+    k = np.array([
+        i[1] * j[2] - i[2] * j[1],
+        i[2] * j[0] - i[0] * j[2],
+        i[0] * j[1] - i[1] * j[0]
+    ])
+    k = k / norma(k, 2)
+    R = np.array([i, j, k])
+    
+    # Centramos las coordenadas de la imagen
+    K = pd.read_csv('heli/K.csv', sep = ';', header = None).to_numpy() 
+    x_0 = m0[0] - K[0, 2]
+    y_0 = m0[1] - K[1, 2]
+    
+    X_0 = (Z_0 / fx) * x_0
+    Y_0 = (Z_0 / fx) * y_0
+    
+    # Por la ecuacion (15), trasladamos la camara para que M0 sea el origen
+    T = np.array([X_0, Y_0, Z_0]) - arroba(R, M0).reshape(-1)
+    
+    
+    
+    return i, j, k, Z_0, R, T 
+
+
+def evaluarPose(R, t, obj_vecs, img_vecs, K):
+    validos = len(obj_vecs)
+    puntos_camara = []
+    
+    for vecs in obj_vecs:
+        punto_camara = np.asarray(arroba(R, vecs)).reshape(-1) + np.asarray(t).reshape(-1) # [X_i, Y_i, Z_i]
+        # Quiere decir que quedo detras de la camara. Descartamos la solucion
+        if punto_camara[2] <= 0: 
+            return 0, None    
+            
+        puntos_camara.append(punto_camara)
+     
+    # Ahora queremos ver donde va a parar ese punto en el pixel (en la foto)
+    # Las proyecciones en los pixeles van a ser K multiplicado cada punto
+    # dada en la seccion del modelo pinhole ecuacion (2)
+    
+    fx = K[0, 0]
+    fy = K[1, 1]
+    se = K[0, 1]
+    cu = K[0, 2]
+    cv = K[1, 2]
+    
+    proyecciones = []
+    for punto in puntos_camara:
+        # Hacemos las multiplicaciones de forma manual segun la ecuacion (3)
+        X_i, Y_i, Z_i = punto
+        u = fx * (X_i / Z_i) + se * (Y_i / Z_i) + cu
+        v = fy * (Y_i / Z_i) + cv
+        proyecciones.append([u, v])
+        
+    # Una vez que tenemos la proyecciones, calculamos el RMS
+    proyecciones = np.array(proyecciones) 
+    img_vecs = np.array(img_vecs)
+    
+    rms = np.sqrt(np.mean((img_vecs - proyecciones)**2))
+
+    return validos, rms
+
+
+def aplicarPOSIT(obj_vecs, img_vecs, K, MaxIt, atol):
+    # Devolvemos la pose de la camara R y t y vamos ajustando iterativamente
+    
+    M0 = obj_vecs[0]
+    m0_sin_centrar = img_vecs[0]
+    
+    # Centralizamos los puntos de la imagen como en c)
+    x_y = []
+    for u, v in img_vecs:
+        x = u - K[0][2]
+        y = v - K[1][2]
+        
+        x_y.append([x, y])
+    
+    x_y = np.array(x_y) 
+    
+    A = obj_vecs - M0
+    
+    # CORRECCION
+    # Buscamos el n que esta en el nucleo de A con svd_reducida
+    _, s, Vt = svd_reducida(A)
+    
+    if s[-1] < 1e-8:
+        n = Vt[-1]
+        n = n / norma(n)
+    else:
+        n = np.zeros(3)
+    
+    pseudo = pseudoinversa(A)
+    
+    e_i_k = np.zeros(len(obj_vecs))
+    
+    m0 = x_y[0]
+    
+    fx = K[0][0] # foco
+    
+    R = None
+    t = None
+    
+    iteracion = 0
+
+    # Iteracion POSIT
+    while iteracion < MaxIt:
+        # 1.
+        b_u = []
+        b_v = []
+        
+        for i in range(len(img_vecs)):
+            x_i, y_i = x_y[i]
+            
+            b_i_u = x_i * (1 + e_i_k[i]) - m0[0] 
+            b_i_v = y_i * (1 + e_i_k[i]) - m0[1] 
+            
+            b_u.append(b_i_u)
+            b_v.append(b_i_v)
+            
+        b_u = np.array(b_u)
+        b_v = np.array(b_v)
+        
+        # 2.  
+        I0 = np.asarray(arroba(pseudo, b_u)).reshape(-1)
+        J0 = np.asarray(arroba(pseudo, b_v)).reshape(-1)
+        
+        # 3.  
+        r_1, r_2 = calculoLambdaMu(I0, J0)
+        
+        # 4.
+        # CORRECCION
+        I_1 = I0 + r_1[0] * n
+        J_1 = J0 + r_1[1] * n
+        
+        I_2 = I0 + r_2[0] * n
+        J_2 = J0 + r_2[1] * n
+        
+        fx = K[0][0] # foco
+        
+        # CalcularSalidaPOSIT se va a encargar de centrar
+        i_1, j_1, k_1, Z_0_1, R_1, t_1 = calcularSalidaPOSIT(I_1, J_1, fx, m0_sin_centrar, M0)
+        i_2, j_2, k_2, Z_0_2, R_2, t_2 = calcularSalidaPOSIT(I_2, J_2, fx, m0_sin_centrar, M0)
+
+        # 5.
+        
+        candidatos = []
+        if Z_0_1 > 0:
+            _, rms_1 = evaluarPose(R_1, t_1, obj_vecs, img_vecs, K)
+            # CORRECCION
+            # Hay que verificar porque e) podria devolver None
+            if rms_1 is not None:  
+                candidatos.append([rms_1, R_1, t_1, Z_0_1, k_1])
+        if Z_0_2 > 0:
+            _, rms_2 = evaluarPose(R_2, t_2, obj_vecs, img_vecs, K)
+            # CORRECCION
+            # Hay que verificar porque e) podria devol
+            if rms_2 is not None:
+                candidatos.append([rms_2, R_2, t_2, Z_0_2, k_2])
+        
+        if not candidatos:
+            raise ValueError('No se encontro ninguna pose valida')  
+        
+        # CORRECCION
+        # Verifico entre los candidatos quien tiene menos rms, es decir
+        mejor_i = 0
+        for i in range(1, len(candidatos)):
+            if candidatos[i][0] < candidatos[mejor_i][0]:
+                mejor_i = i
+                
+        rms, R, t, Z_0, k = candidatos[mejor_i]
+            
+        e_i_k_1 = (1.0 / Z_0) * np.asarray(arroba(A, k)).reshape(-1) # vector
+        # 6.
+
+        if norma(e_i_k_1 - e_i_k) < atol: # CORRECCION
+            return R, t
+        
+        e_i_k = e_i_k_1  
+        
+        iteracion += 1
+
+    return R, t
