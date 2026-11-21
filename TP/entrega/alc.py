@@ -438,7 +438,11 @@ def QR_con_HH(A, tol=1e-12):
 
 
 def calcula_Householder_k(u):
-    u = u / norma(u)
+    u = np.asarray(u).reshape(-1)
+    n_u = norma(u)
+    if not (n_u > 1e-15):
+        return np.eye(len(u))
+    u = u / n_u
     n = u.shape[0]
     Hk = np.eye(n)
     for i in range(n):
@@ -631,7 +635,8 @@ def pseudoinversa(A):
     Sig_inv = np.zeros((r,r))
     
     for i in range(r):
-        Sig_inv[i][i] = 1.0 / hatSig[i]
+        if hatSig[i] > 1e-10:
+            Sig_inv[i][i] = 1.0 / hatSig[i]
         
     U_t = traspuesta(hatU)
     
