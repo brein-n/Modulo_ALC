@@ -1,4 +1,6 @@
 import numpy as np  
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 
 #Laboratorio 0
 
@@ -763,6 +765,36 @@ def devolverMatricesCalibracion3D(M, simple=True):
 
         return R, t, K
     
+# Ejercicio 4:
+def traducirPunto(M,p):
+    punto=np.array([p[0],p[1],1]) 
+    r=multiplicacionMatrizVector(M,punto) 
+    return np.array([r[0]/r[2],r[1]/r[2]])
+
+  #genera un "circulo" de 1m de radio con centro en (x,y), se genera con 8 puntos(el 9 cierra el circulo)
+def circulo(x,y):
+    c=[]
+    c.append((x+1, y))
+    c.append((x+0.7, y+0.7))
+    c.append((x, y+1))
+    c.append((x-0.7, y+0.7))
+    c.append((x-1, y))
+    c.append((x-0.7, y-0.7))
+    c.append((x, y-1))
+    c.append((x+0.7, y-0.7))
+    c.append((x+1, y))
+    return c
+
+# Ejercicio 5:
+def mostrarPuntos(H, objPts, imgPts, imagen):
+    plt.imshow(mpimg.imread(imagen))
+    objPts_traducida=[]
+    for (x,y) in objPts:
+       objPts_traducida.append(traducirPunto(H,(x,y)))
+    objPts_traducida=np.array(objPts_traducida)
+    plt.scatter(imgPts[:, 0], imgPts[:, 1])
+    plt.scatter(objPts_traducida[:, 0], objPts_traducida[:, 1], marker="x")
+    plt.show()
 
 # Ejercicio 6:
 
