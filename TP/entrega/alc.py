@@ -765,6 +765,136 @@ def devolverMatricesCalibracion3D(M, simple=True):
 
         return R, t, K
     
+# Ejercicio 3:
+
+def obtenerQ2d(imgPts,objPts):
+  #Armo la matriz Q en donde voy a guardar las filas creadas
+  matriz_Q=[] 
+  
+  #Separo las coordenadas y armo  las filas de mi matriz Q  
+  for i in range(len(objPts)): 
+    U= objPts[i][0]
+    V= objPts[i][1]
+    u= imgPts[i][0]
+    v= imgPts[i][1]
+
+    fila_1=[U, V, 1, 0, 0, 0, -u*U, -u*V, -u]
+    fila_2=[0, 0, 0, U, V, 1, -v*U, -v*V, -v]
+
+    matriz_Q.append(fila_1)
+    matriz_Q.append(fila_2)
+
+  return np.array(matriz_Q)
+
+def armarA(Hlst):
+    filas_A = []
+    
+    #Aplico el algoritmo para armar la matriz A, siendo esta matriz utilizada para calcular K
+    for H in Hlst:
+        # Primera columna de la homografía
+        a, b, c = H[:, 0]  
+        # Segunda columna de la homografía
+        d, e, f = H[:, 1] 
+
+        #c1^T x B x c2=0
+        fila_1 = [ a*d, a*e + b*d, b*e,
+            a*f + c*d,
+            b*f + c*e,
+            c*f
+        ]
+        #c1^T x B x c1 - c2^T x B x c2=0
+        fila_2 = [
+            a*a - d*d,
+            2*(a*b - d*e),
+            b*b - e*e,
+            2*(a*c - d*f), 
+            2*(b*c - e*f),
+            c*c - f*f
+        ]
+        filas_A.append(fila_1)
+        filas_A.append(fila_2)
+    return np.array(filas_A)
+
+
+def calcularK2D(A):
+    #Algoritmo para encontrar K asociado a la matriz A
+    #Se busca el autovector aspcoado al menor autovalor
+    b_final= encontrar_vector_minimo(A)
+
+    #Armo la matriz B
+    B = np.array([
+    [b_final[0], b_final[1], b_final[3]],
+    [b_final[1], b_final[2], b_final[4]],
+    [b_final[3], b_final[4], b_final[5]]])
+
+    #Como sabemos que K  se despeja factorizando B por cholesky primero necesito verificar que se puede aplicar dicha factorización  
+    #Busco los autovalores de  mi matriz B
+    _, D =diagRH(B)
+
+    #Junto todos los autovalores  de dicha matriz y llamo a la funcion normalizar_diagonal en donde me dice si los autovalores me permiten aplicar cholesky
+    lista_autovalores=[]
+    for i in range(D.shape[0]):
+        lista_autovalores.append(D[i][i])
+    B=normalizar_diagonal(B,lista_autovalores)
+
+    #Aplico  el  algoritmo
+    L = cholesky(B)
+
+    #Despejo K en torno a esa factorización y  me aseguro que la posicion [2][2] sea igual a 1
+    K  = traspuesta(inversa(L))
+    if K[2][2]!=1:
+        K=K/K[2][2]
+    return K
+
+def obtenerPose2D(H, K):
+    #Algoritmo  para obtener  R y t
+    K_inv = inversa(K)
+    c1 = H[:, 0]
+    c2 = H[:, 1]
+    c3 = H[:, 2]
+
+    # Multiplicar por la inversa de K
+    v1 = arroba(K_inv,c1).reshape(-1)
+    v2 = arroba(K_inv,c2).reshape(-1)
+    v3 = arroba(K_inv,c3).reshape(-1)
+
+    # Calcular el factor de escala
+    if norma(v1) < 1e-12:
+        raise ValueError("No se puede calcular lambda")
+    
+    lamda = 1 / norma(v1)
+    if (lamda * v3)[2] < 0: #Chequeo que el valor de lamda sea positivo para  que  la camara apunta adelante
+        lamda = -lamda
+                
+    # Recuperar r1, r2 y t
+    r1 = lamda * v1
+    r2 = lamda * v2
+    t = lamda * v3
+
+    r1 = r1 / norma(r1) #Normalizo ||r1||
+    r2 = r2 - producto_interno(r1, r2) * r1   
+
+    if norma(r2) < 1e-12:
+        raise ValueError("No se puede construir la rotación")
+
+    r2 = r2 / norma(r2) #Normalizo ||r2||
+
+    #Armo ||r3|| como r1Xr2 ya que tiene que ser  ortogonal
+    r3 = np.array([ 
+        r1[1]*r2[2] - r1[2]*r2[1],
+        r1[2]*r2[0] - r1[0]*r2[2],
+        r1[0]*r2[1] - r1[1]*r2[0]])
+
+    #Contruyo la matriz de rotación
+    R = np.zeros((3, 3))
+
+    for i in range(3):
+        R[i, 0] = r1[i]
+        R[i, 1] = r2[i]
+        R[i, 2] = r3[i]
+
+    return R, t
+    
 # Ejercicio 4:
 def traducirPunto(M,p):
     punto=np.array([p[0],p[1],1]) 
